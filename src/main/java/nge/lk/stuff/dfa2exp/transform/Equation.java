@@ -25,6 +25,39 @@ public class Equation {
     private final List<Term> disjunctions;
 
     /**
+     * Checks whether the given regular expression R is atomic, i.e. if (R)* is equivalent to R*
+     *
+     * @param expr the regular expression
+     *
+     * @return true if the expression is atomic
+     */
+    private static boolean isAtomic(String expr) {
+        if (expr.length() == 1) {
+            return true;
+        }
+
+        // Check whether the expression is in [] or () and there's only one top-level pair
+        char[] data = expr.toCharArray();
+        int depth = 0;
+        for (int i = 0; i < data.length; i++) {
+            switch (data[i]) {
+                case '(':
+                case '[':
+                    depth++;
+                    break;
+                case ')':
+                case ']':
+                    depth--;
+                    break;
+            }
+            if (depth == 0 && i != data.length - 1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Creates an equation from a state using its transitions
      *
      * @param id the ID of this equation
@@ -66,7 +99,7 @@ public class Equation {
 
         // Transform the prefix into (prefix)*
         String prefix = recursiveTerm.getPrefix();
-        if (prefix.length() > 1) { // TODO This might be improved with better checks for whether parenthesis are necessary
+        if (!isAtomic(prefix)) {
             prefix = "(" + prefix + ")";
         }
         prefix += "*";
@@ -133,7 +166,14 @@ public class Equation {
         for (int variable : variables) {
             Set<String> prefixes = disjunctions.stream().filter(t -> t.getStateVariable() == variable).map(Term::getPrefix).collect(Collectors.toSet());
 
-            String combination = prefixes.size() == 1 ? prefixes.stream().findAny().get() : "(" + String.join("|", prefixes) + ")";
+            String combination;
+            if (prefixes.size() == 1) {
+                combination = prefixes.stream().findAny().get();
+            } else if (prefixes.stream().allMatch(p -> p.length() == 1)) {
+                combination = "[" + String.join("", prefixes) + "]";
+            } else {
+                combination = "(" + String.join("|", prefixes) + ")";
+            }
             tmp.add(new Term(combination, variable));
         }
         disjunctions.clear();
