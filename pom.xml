@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>nge.lk.stuff.divexp</groupId>
-    <artifactId>DivExp</artifactId>
+    <groupId>nge.lk.stuff.dfa2exp</groupId>
+    <artifactId>DFA2Exp</artifactId>
     <version>1.0.0</version>
     <build>
         <plugins>
