@@ -3,6 +3,7 @@ package nge.lk.stuff.dfa2exp;
 import nge.lk.stuff.dfa2exp.model.DFA;
 import nge.lk.stuff.dfa2exp.model.State;
 import nge.lk.stuff.dfa2exp.transform.EquationSystem;
+import nge.lk.stuff.dfa2exp.transform.ExpressionOptimizer;
 
 public final class DivisionExpressionGenerator {
 
@@ -45,8 +46,9 @@ public final class DivisionExpressionGenerator {
         }
 
         EquationSystem equSys = new EquationSystem(d, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-
-        System.out.println(equSys.solve());
+        String expr = equSys.solve();
+        ExpressionOptimizer optimizer = new ExpressionOptimizer(expr);
+        System.out.println(optimizer.optimize());
     }
 
     private static int getHighBaseSymbolIndex(char c) {

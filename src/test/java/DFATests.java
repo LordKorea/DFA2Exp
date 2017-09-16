@@ -1,6 +1,7 @@
 import nge.lk.stuff.dfa2exp.model.DFA;
 import nge.lk.stuff.dfa2exp.model.State;
 import nge.lk.stuff.dfa2exp.transform.EquationSystem;
+import nge.lk.stuff.dfa2exp.transform.ExpressionOptimizer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -24,40 +25,48 @@ public class DFATests {
     }
 
     @Test
-    public void testDivisionAutomata() {
+    public void testDivisionAutomataWithOptimization() {
         Random r = new Random();
         String fullAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        for (int base = Character.MIN_RADIX; base <= Character.MAX_RADIX; base++) {
-            for (int div = 2; div < 8; div++) {
-                DFA dfa = new DFA(div, base);
-                dfa.makeFinal(0);
-                for (int i = 0; i < div * base; i++) {
-                    String str = Integer.toString(i, base).toUpperCase();
-                    char[] data = str.toCharArray();
+        for (int withOptimizations = 0; withOptimizations < 2; withOptimizations++) {
+            for (int base = Character.MIN_RADIX; base <= Character.MAX_RADIX; base++) {
+                for (int div = 2; div < 8; div++) {
+                    DFA dfa = new DFA(div, base);
+                    dfa.makeFinal(0);
+                    for (int i = 0; i < div * base; i++) {
+                        String str = Integer.toString(i, base).toUpperCase();
+                        char[] data = str.toCharArray();
 
-                    State cursor = dfa.createRun();
-                    for (int j = 0; j < data.length; j++) {
-                        int symbol = getHighBaseSymbolIndex(data[j]);
-                        if (j == data.length - 1 && !cursor.hasTransition(symbol)) {
-                            cursor.createTransition(symbol, dfa.getState(i % div));
-                        } else {
-                            Assertions.assertTrue(cursor.hasTransition(symbol), String.format("(BASE, DIV) = (%d, %d): Invalid transition prefix of %s at index %d", base, div, str, j));
-                            cursor = cursor.takeTransition(symbol);
-                            if (j == data.length - 1) {
-                                Assertions.assertEquals(cursor, dfa.getState(i % div), String.format("(BASE, DIV) = (%d, %d): DFA does not produce correct sequence for %s, ends in wrong state", base, div, str));
+                        State cursor = dfa.createRun();
+                        for (int j = 0; j < data.length; j++) {
+                            int symbol = getHighBaseSymbolIndex(data[j]);
+                            if (j == data.length - 1 && !cursor.hasTransition(symbol)) {
+                                cursor.createTransition(symbol, dfa.getState(i % div));
+                            } else {
+                                Assertions.assertTrue(cursor.hasTransition(symbol), String.format("(BASE, DIV, OPT) = (%d, %d, %d): Invalid transition prefix of %s at index %d", base, div, withOptimizations, str, j));
+                                cursor = cursor.takeTransition(symbol);
+                                if (j == data.length - 1) {
+                                    Assertions.assertEquals(cursor, dfa.getState(i % div), String.format("(BASE, DIV, OPT) = (%d, %d, %d): DFA does not produce correct sequence for %s, ends in wrong state", base, div, withOptimizations, str));
+                                }
                             }
                         }
                     }
-                }
-                Assertions.assertTrue(dfa.isComplete(), String.format("(BASE, DIV) = (%d, %d): DFA is not complete", base, div));
+                    Assertions.assertTrue(dfa.isComplete(), String.format("(BASE, DIV, OPT) = (%d, %d, %d): DFA is not complete", base, div, withOptimizations));
 
-                EquationSystem system = new EquationSystem(dfa, fullAlphabet.substring(0, base));
-                String expr = system.solve();
-                Matcher m = Pattern.compile(expr).matcher("");
-                for (int i = 0; i < 100; i++) {
-                    int num = r.nextInt(10000);
-                    m.reset(Integer.toString(num, base).toUpperCase());
-                    Assertions.assertEquals(num % div == 0, m.matches(), String.format("(BASE, DIV) = (%d, %d): Expression does not return correct result for %d", base, div, num));
+                    EquationSystem system = new EquationSystem(dfa, fullAlphabet.substring(0, base));
+                    String expr = system.solve();
+
+                    if (withOptimizations == 1) {
+                        ExpressionOptimizer optimizer = new ExpressionOptimizer(expr);
+                        expr = optimizer.optimize();
+                    }
+
+                    Matcher m = Pattern.compile(expr).matcher("");
+                    for (int i = 0; i < 100; i++) {
+                        int num = r.nextInt(10000);
+                        m.reset(Integer.toString(num, base).toUpperCase());
+                        Assertions.assertEquals(num % div == 0, m.matches(), String.format("(BASE, DIV, OPT) = (%d, %d, %d): Expression does not return correct result for %d", base, div, withOptimizations, num));
+                    }
                 }
             }
         }

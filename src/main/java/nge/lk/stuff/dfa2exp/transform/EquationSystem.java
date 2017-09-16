@@ -21,6 +21,10 @@ public class EquationSystem {
      * @param alphabet the alphabet to use for transforming the DFA into a system of equations
      */
     public EquationSystem(DFA source, String alphabet) {
+        if (alphabet.chars().anyMatch(i -> "()[]|*+?.^${}".contains(String.valueOf((char) i)))) {
+            throw new IllegalArgumentException("Alphabet may not contain reserved characters");
+        }
+
         equations = new Equation[source.stateCount()];
         Arrays.setAll(equations, i -> new Equation(i, source.getState(i), alphabet));
     }

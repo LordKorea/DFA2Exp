@@ -25,39 +25,6 @@ public class Equation {
     private final List<Term> disjunctions;
 
     /**
-     * Checks whether the given regular expression R is atomic, i.e. if (R)* is equivalent to R*
-     *
-     * @param expr the regular expression
-     *
-     * @return true if the expression is atomic
-     */
-    private static boolean isAtomic(String expr) {
-        if (expr.length() == 1) {
-            return true;
-        }
-
-        // Check whether the expression is in [] or () and there's only one top-level pair
-        char[] data = expr.toCharArray();
-        int depth = 0;
-        for (int i = 0; i < data.length; i++) {
-            switch (data[i]) {
-                case '(':
-                case '[':
-                    depth++;
-                    break;
-                case ')':
-                case ']':
-                    depth--;
-                    break;
-            }
-            if (depth == 0 && i != data.length - 1) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
      * Creates an equation from a state using its transitions
      *
      * @param id the ID of this equation
@@ -99,7 +66,7 @@ public class Equation {
 
         // Transform the prefix into (prefix)*
         String prefix = recursiveTerm.getPrefix();
-        if (!isAtomic(prefix)) {
+        if (!ExpressionOptimizer.isAtomic(prefix)) {
             prefix = "(" + prefix + ")";
         }
         prefix += "*";
